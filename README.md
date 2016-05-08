@@ -2,7 +2,7 @@
 How to boot ubuntu variants from a zfs filesystem using only a 'live cd' 16.04 / xenial ubuntu environment.
 
 This is written presuming lubuntu. Use xubuntu or the variant of your choice where you see lubuntu below.
-This is written presuming the installation will be on /dev/sda .  Replace /dev/sda with  the /dev/ path to the drive(s) that will hold the initial zfs file system and be used as boot targets.
+This is written presuming the installation will be on /dev/sda.  Replace /dev/sda with  the /dev/ path to the drive(s) that will hold the initial zfs file system and be used as boot targets.
 
 1) Boot into 'try lubuntu' live-cd environment. Open a terminal, sudo apt-get install zfs-initramfs ssh
 (ssh is optional, it's often easier to 'cut and paste' from an ssh session).

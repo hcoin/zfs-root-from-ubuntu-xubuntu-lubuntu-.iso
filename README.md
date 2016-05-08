@@ -10,15 +10,21 @@ This is written presuming the installation will be on /dev/sda.  Replace /dev/sd
 2) Use the app gparted to partition sda, leave 512mb before first partition.   Set it with the 'boot' flag, type 'unformatted'.  Do the same to all other drives that will be part of the zpool.  It is fine to install to just one drive, then create a mirror later.
 
 3) zpool create -o ashift=12 -O compression=lz4 zfsroots /dev/sda1
+
 The above command if for an install to a single drive.  The command is more complex if creating mirrors, raidz setups, etc. Consult the zpool command to learn how to specify more complex installs.  'zfsroots' is arbitrary.
 
 4) zfs create -V 30G zfsroots/s2
+
 's2' is arbitrary, you could use 'lubuntu-image' or similar.
 
 5) Give 'grub' a target it understands in /dev.
-cat >  /etc/udev/rules.d/90-zfs.rules 
+
+cat >  /etc/udev/rules.d/90-zfs.rules
+
 KERNEL=="sd*[!0-9]", IMPORT{parent}=="ID_*", SYMLINK+="$env{ID_BUS}-$env{ID_SERIAL}"
+
 KERNEL=="sd*[0-9]", IMPORT{parent}=="ID_*", SYMLINK+="$env{ID_BUS}-$env{ID_SERIAL}-part%n"
+
 ^D
 
 6) udevadm trigger
@@ -29,37 +35,53 @@ KERNEL=="sd*[0-9]", IMPORT{parent}=="ID_*", SYMLINK+="$env{ID_BUS}-$env{ID_SERIA
 9) At the end of the install cleanup, choose 'continue testing'.
 
 10) 
+
 zpool export zfsroots
+
 zpool import -d /dev/disk/by-id/ zfsroots
 
 11) 
 zfs create zfsroots/std
+
 mkdir /mntlcl
+
 mount /dev/zvol/zfsroots/s2-part1 /mntlcl
+
 rsync -avPX /mntlcl/. /zfsroots/std/.
+
 
 12)
 comment everything out in /zfsroots/std/etc/fstab
 
 in /zfsroots/std/etc/default/grub change to:
+
 GRUB_CMDLINE_LINUX="boot=zfs rpool=zfsroot bootfs=zfsroot/std"
 
 cp /etc/udev/rules.d/90* /zfsroots/std/etc/udev/rules.d/
+
 cp /etc/resolv.conf /zfsroots/std/etc/
 
 13)
+
 for d in proc sys dev;do mount --bind /$d /zfsroots/std/$d;done
+
 chroot /zfsroots/std
+
 apt-get install zfs-initramfs
+
 update-grub
+
 grep -i 'ROOT=ZFS' /boot/grub/grub.cfg
-#confirm somthing like linux	/std@/boot/vmlinuz-4.4.0-21-generic root=ZFS=zfsroots/std ro boot=zfs rpool=zfsroot bootfs=zfsroot/std
+
+Confirm somthing like linux	/std@/boot/vmlinuz-4.4.0-21-generic root=ZFS=zfsroots/std ro boot=zfs rpool=zfsroot bootfs=zfsroot/std
 
 exit
+
 for d in proc sys dev;do umount /zfsroots/std/$d;done
 
 grub-install  --boot-directory=/zfsroots/std/boot /dev/sda
-#(if the zpool create command involved multiple drives, repeat this for all the drives in the command).
+
+If the zpool create command involved multiple drives, repeat this for all the drives in the command.
 
 zfs snapshot zfsroots/std@pristine
 
